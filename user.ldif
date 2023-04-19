@@ -1,0 +1,6 @@
+dn: cn=yangkeao+uid=u001000,dc=example,dc=com
+sn: Yang
+uid: u001000
+userPassword: 123456
+objectClass: person
+objectClass: inetOrgPerson
