@@ -1,6 +1,6 @@
-dn: cn=yangkeao+uid=u001000,dc=example,dc=com
-sn: Yang
-uid: u001000
-userPassword: 123456
-objectClass: person
+dn: cn=yangkeao+uid=yangkeao,dc=example,dc=org
+sn: yang
+cn: yangkeao
+uid: yangkeao
+userPassword: 1234567890
 objectClass: inetOrgPerson

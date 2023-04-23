@@ -1,1 +1,0 @@
-Don't use this repo for production. It's never secure and is designed only for @YangKeao to debug LDAP related softwares.
