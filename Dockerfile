@@ -26,6 +26,12 @@ COPY ./my.cnf /etc/my.cnf
 
 RUN service mysql start && mysql -u root -p123456 -e "create user yangkeao IDENTIFIED WITH authentication_ldap_sasl as 'cn=yangkeao,dc=example,dc=org';" && service mysql stop
 
-COPY ./entrypoint.sh /entrypoint.sh
+COPY ./ssl.ldif /tmp/ssl.ldif
+COPY ./ssl/ldap.key /etc/ssl/private/ldap.key
+COPY ./ssl/ldap.crt /etc/ssl/certs/ldap.crt
+COPY ./ssl/example.crt /etc/ssl/certs/example.crt
+RUN chmod 777 -R /etc/ssl
+# RUN service slapd start && ldapmodify -H ldapi:// -Y EXTERNAL -f /tmp/ssl.ldif && service slapd stop
 
+COPY ./entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]

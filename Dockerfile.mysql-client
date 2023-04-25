@@ -1,0 +1,5 @@
+FROM percona/percona-server:8.0
+
+USER root
+RUN yum install cyrus-sasl cyrus-sasl-scram openldap -y
+USER mysql

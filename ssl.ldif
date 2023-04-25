@@ -1,0 +1,10 @@
+dn: cn=config
+changetype: modify
+add: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/ssl/private/ldap.key
+-
+add: olcTLSCACertificateFile
+olcTLSCACertificateFile: /etc/ssl/certs/example.crt
+-
+add: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/ssl/certs/ldap.crt
