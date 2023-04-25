@@ -5,10 +5,10 @@ RUN cat /tmp/debconf-slapd.conf | DEBIAN_FRONTEND=noninteractive debconf-set-sel
 RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install slapd ldap-utils libldap-2.5-0 sasl2-bin slapd-contrib libsasl2-modules libsasl2-modules-gssapi-mit libsasl2-modules-ldap -y
 
 COPY ./slapd.conf.ldif /tmp/slapd.conf.ldif
-RUN service slapd start && ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/slapd.conf.ldif && service slapd stop
+RUN ulimit -n 1024 && service slapd start && ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/slapd.conf.ldif && service slapd stop
 
 COPY ./user.ldif /tmp/user.ldif
-RUN service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/user.ldif && service slapd stop
+RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/user.ldif && service slapd stop
 
 RUN echo "123456" |saslpasswd2 -c yangkeao -u example.org -p
 RUN usermod -aG sasl openldap
@@ -31,7 +31,7 @@ COPY ./ssl/ldap.key /etc/ssl/private/ldap.key
 COPY ./ssl/ldap.crt /etc/ssl/certs/ldap.crt
 COPY ./ssl/example.crt /etc/ssl/certs/example.crt
 RUN chmod 777 -R /etc/ssl
-# RUN service slapd start && ldapmodify -H ldapi:// -Y EXTERNAL -f /tmp/ssl.ldif && service slapd stop
+RUN ulimit -n 1024 && service slapd start && ldapmodify -H ldapi:// -Y EXTERNAL -f /tmp/ssl.ldif && service slapd stop
 
 COPY ./entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
