@@ -1,0 +1,30 @@
+# Prepare tidb
+FROM rockylinux:9 as tidb_builder
+
+ENV GOLANG_VERSION 1.20.4
+ENV ARCH amd64
+ENV GOLANG_DOWNLOAD_URL https://dl.google.com/go/go$GOLANG_VERSION.linux-$ARCH.tar.gz
+ENV GOPATH /go
+ENV GOROOT /usr/local/go
+ENV PATH $GOPATH/bin:$GOROOT/bin:$PATH
+
+COPY ./tidb /tidb
+
+RUN yum update -y && yum groupinstall 'Development Tools' -y \
+    && curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz \
+	&& tar -C /usr/local -xzf golang.tar.gz \
+	&& rm golang.tar.gz
+
+ARG GOPROXY
+RUN export GOPROXY=${GOPROXY} && cd /tidb && make server
+RUN cp /tidb/bin/tidb-server /tidb-server
+
+# Prepare LDAP
+
+# TODO
+
+# Integration
+
+WORKDIR /
+EXPOSE 4000
+ENTRYPOINT ["/tidb-server"]
