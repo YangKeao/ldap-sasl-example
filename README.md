@@ -15,3 +15,11 @@ docker run -it --rm --network host yangkeao/ldap-sasl-example /bin/bash
 ## Percona server configuration
 
 1. An user `yangkeao` is added to the percona database, authenticated with `LDAP_SASL` and the dn is `cn=yangkeao,dc=example,dc=org`.
+
+## Connect to tidb-with-ldap
+
+```
+docker run -it --name tidb-with-ldap -p4000:4000 tidb-with-ldap:latest /bin/bash
+```
+
+Client-side plugin for mysql, `authentication_ldap_sasl_client.so`, can be downloaded in https://ubuntu.pkgs.org/22.04/mysql-8.0-amd64/mysql-community-client-plugins_8.0.33-1ubuntu22.04_amd64.deb.html

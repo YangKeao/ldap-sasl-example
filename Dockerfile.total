@@ -1,5 +1,5 @@
 # Prepare tidb
-FROM rockylinux:9 as tidb_builder
+FROM ubuntu:22.04
 
 ENV GOLANG_VERSION 1.20.4
 ENV ARCH amd64
@@ -8,23 +8,61 @@ ENV GOPATH /go
 ENV GOROOT /usr/local/go
 ENV PATH $GOPATH/bin:$GOROOT/bin:$PATH
 
-COPY ./tidb /tidb
-
-RUN yum update -y && yum groupinstall 'Development Tools' -y \
-    && curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz \
+RUN apt-get update -y && apt-get install curl build-essential mysql-client -y \
+  && curl -fsSL "$GOLANG_DOWNLOAD_URL" -o golang.tar.gz \
 	&& tar -C /usr/local -xzf golang.tar.gz \
 	&& rm golang.tar.gz
 
+COPY ./tidb /tidb
+COPY ./mysql-community-client-plugins_8.0.33-1ubuntu22.04_amd64.deb /mysql-community-client-plugins.deb
+RUN dpkg -i /mysql-community-client-plugins.deb
+
 ARG GOPROXY
-RUN export GOPROXY=${GOPROXY} && cd /tidb && make server
-RUN cp /tidb/bin/tidb-server /tidb-server
+RUN export GOPROXY=${GOPROXY} && cd /tidb && make server \
+  && cp /tidb/bin/tidb-server /tidb-server \
+  && rm -rf /tidb /go /usr/local/go
 
 # Prepare LDAP
 
-# TODO
+COPY ./debconf-slapd.conf /tmp/debconf-slapd.conf
+RUN cat /tmp/debconf-slapd.conf | DEBIAN_FRONTEND=noninteractive debconf-set-selections
+RUN DEBIAN_FRONTEND=noninteractive apt-get install slapd ldap-utils libldap-2.5-0 sasl2-bin slapd-contrib libsasl2-modules libsasl2-modules-gssapi-mit libsasl2-modules-ldap -y
 
-# Integration
+COPY ./slapd.conf.ldif /tmp/slapd.conf.ldif
+RUN ulimit -n 1024 && service slapd start && ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/slapd.conf.ldif && service slapd stop
+
+COPY ./user.ldif /tmp/user.ldif
+RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/user.ldif && service slapd stop
+
+RUN echo "123456" |saslpasswd2 -c yangkeao -u example.org -p
+RUN usermod -aG sasl openldap
+
+COPY ./ssl.ldif /tmp/ssl.ldif
+COPY ./ssl/ldap.key /etc/ssl/private/ldap.key
+COPY ./ssl/ldap.crt /etc/ssl/certs/ldap.crt
+COPY ./ssl/example.crt /etc/ssl/certs/example.crt
+RUN chmod 777 -R /etc/ssl
+RUN ulimit -n 1024 && service slapd start && ldapmodify -H ldapi:// -Y EXTERNAL -f /tmp/ssl.ldif && service slapd stop
+
+# Prepare Kerberos
+
+COPY ./debconf-krb5-config.conf /tmp/debconf-krb5-config.conf
+RUN cat /tmp/debconf-krb5-config.conf | DEBIAN_FRONTEND=noninteractive debconf-set-selections
+RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install krb5-kdc krb5-admin-server -y
+RUN printf "123456\n123456" | krb5_newrealm
+RUN kadmin.local -q "addprinc -pw 123456 yangkeao@example.org"
+RUN kadmin.local -q "addprinc -pw 123456 ldap/ldap.example.org@example.org"
+RUN echo "ldap.example.org" > /etc/hostname
+
+COPY ./krb5.conf /etc/krb5.conf
+COPY ./kdc.conf /etc/krb5kdc/kdc.conf
+COPY ./kdc.cnf.template /usr/share/krb5-kdc/kdc.conf.template
+
+RUN printf "addent -password -p yangkeao@example.org -k 1 -e aes256-cts-hmac-sha1-96\n123456\naddent -password -p ldap/ldap.example.org@example.org -k 1 -e aes256-cts-hmac-sha1-96\n123456\nwkt /etc/krb5.keytab\nquit" | ktutil
+RUN chmod 777 /etc/krb5.keytab
+
 
 WORKDIR /
 EXPOSE 4000
-ENTRYPOINT ["/tidb-server"]
+COPY ./entrypoint.total.sh /entrypoint.sh
+ENTRYPOINT [ "/entrypoint.sh" ]
