@@ -30,9 +30,11 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get install slapd ldap-utils libldap-2.5-
 
 COPY ./slapd.conf.ldif /tmp/slapd.conf.ldif
 RUN ulimit -n 1024 && service slapd start && ldapmodify -Y EXTERNAL -H ldapi:/// -f /tmp/slapd.conf.ldif && service slapd stop
-
 COPY ./user.ldif /tmp/user.ldif
 RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/user.ldif && service slapd stop
+
+# COPY ./services.ldif /tmp/services.ldif
+# RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/services.ldif && service slapd stop
 
 RUN echo "123456" |saslpasswd2 -c yangkeao -u example.org -p
 RUN usermod -aG sasl openldap
@@ -46,20 +48,25 @@ RUN ulimit -n 1024 && service slapd start && ldapmodify -H ldapi:// -Y EXTERNAL 
 
 # Prepare Kerberos
 
-COPY ./debconf-krb5-config.conf /tmp/debconf-krb5-config.conf
-RUN cat /tmp/debconf-krb5-config.conf | DEBIAN_FRONTEND=noninteractive debconf-set-selections
-RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install krb5-kdc krb5-admin-server -y
-RUN printf "123456\n123456" | krb5_newrealm
-RUN kadmin.local -q "addprinc -pw 123456 yangkeao@example.org"
-RUN kadmin.local -q "addprinc -pw 123456 ldap/ldap.example.org@example.org"
-RUN echo "ldap.example.org" > /etc/hostname
+# COPY ./debconf-krb5-config.conf /tmp/debconf-krb5-config.conf
+# RUN cat /tmp/debconf-krb5-config.conf | DEBIAN_FRONTEND=noninteractive debconf-set-selections
+# RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install krb5-kdc krb5-admin-server krb5-kdc-ldap -y
+# RUN printf "123456\n123456" | krb5_newrealm
+# RUN kadmin.local -q "addprinc -pw 123456 yangkeao@EXAMPLE.ORG"
+# RUN kadmin.local -q "addprinc -pw 123456 ldap/ldap.example.org@EXAMPLE.ORG"
+# RUN echo "ldap.example.org" > /etc/hostname
 
-COPY ./krb5.conf /etc/krb5.conf
-COPY ./kdc.conf /etc/krb5kdc/kdc.conf
-COPY ./kdc.cnf.template /usr/share/krb5-kdc/kdc.conf.template
+# COPY ./krb5.conf /etc/krb5.conf
+# COPY ./kdc.conf /etc/krb5kdc/kdc.conf
+# COPY ./kdc.cnf.template /usr/share/krb5-kdc/kdc.conf.template
 
-RUN printf "addent -password -p yangkeao@example.org -k 1 -e aes256-cts-hmac-sha1-96\n123456\naddent -password -p ldap/ldap.example.org@example.org -k 1 -e aes256-cts-hmac-sha1-96\n123456\nwkt /etc/krb5.keytab\nquit" | ktutil
-RUN chmod 777 /etc/krb5.keytab
+# RUN printf "addent -password -p yangkeao@EXAMPLE.ORG -k 1 -e aes256-cts-hmac-sha1-96\n123456\naddent -password -p ldap/ldap.example.org@EXAMPLE.ORG -k 1 -e aes256-cts-hmac-sha1-96\n123456\nwkt /etc/krb5.keytab\nquit" | ktutil
+# RUN chmod 777 /etc/krb5.keytab
+
+# COPY ./ldap.ldif /tmp/ldap.ldif
+# RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/ldap.ldif && service slapd stop
+# COPY ./krbtgt.ldif /tmp/krbtgt.ldif
+# RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/krbtgt.ldif && service slapd stop
 
 
 WORKDIR /
