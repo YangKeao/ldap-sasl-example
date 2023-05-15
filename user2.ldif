@@ -1,0 +1,6 @@
+dn: cn=cbc+uid=cbc,dc=example,dc=org
+sn: chen
+cn: cbc
+uid: cbc
+userPassword: {SASL}cbc@EXAMPLE.ORG
+objectClass: inetOrgPerson
