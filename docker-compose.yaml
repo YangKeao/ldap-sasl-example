@@ -1,0 +1,10 @@
+services:
+  tidb:
+    image: tidb-with-ldap:latest
+    container_name: tidb-with-ldap
+    ports:
+      - '4000:4000'
+    extra_hosts:
+      - "example.org:127.0.0.1"
+    hostname: example.org
+    tty: true

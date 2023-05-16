@@ -19,7 +19,7 @@ docker run -it --rm --network host yangkeao/ldap-sasl-example /bin/bash
 ## Connect to tidb-with-ldap
 
 ```
-docker run -it --name tidb-with-ldap -p4000:4000 tidb-with-ldap:latest /bin/bash
+docker run -it --name tidb-with-ldap -h example.org -p4000:4000 tidb-with-ldap:latest /bin/bash
 ```
 
 Client-side plugin for mysql, `authentication_ldap_sasl_client.so`, can be downloaded in https://ubuntu.pkgs.org/22.04/mysql-8.0-amd64/mysql-community-client-plugins_8.0.33-1ubuntu22.04_amd64.deb.html
