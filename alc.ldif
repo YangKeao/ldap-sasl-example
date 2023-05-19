@@ -1,0 +1,15 @@
+dn: olcDatabase={1}mdb,cn=config
+add: olcAccess
+olcAccess: {0}to attrs=krbPrincipalKey
+  by anonymous auth
+  by dn.exact="uid=kdc,ou=kerberos,ou=services,dc=example,dc=org" read
+  by dn.exact="uid=kadmin,ou=kerberos,ou=services,dc=example,dc=org" write
+  by self write
+  by * none
+-
+add: olcAccess
+olcAccess: {1}to dn.subtree="dc=example,dc=org"
+  by dn.exact="uid=kdc,ou=kerberos,ou=services,dc=example,dc=org" read
+  by dn.exact="uid=kadmin,ou=kerberos,ou=services,dc=example,dc=org" write
+  by anonymous auth
+  by * none
