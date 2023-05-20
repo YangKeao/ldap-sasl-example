@@ -73,13 +73,16 @@ COPY ./krb5.conf /etc/krb5.conf
 COPY ./kdc.conf /etc/krb5kdc/kdc.conf
 COPY ./kadm5.acl /etc/krb5kdc/kadm5.acl
 
+# The following steps need to read kdc.conf
 RUN service slapd start && printf "123456\n123456\n123456" | kdb5_ldap_util -D "cn=admin,dc=example,dc=org" create -subtrees dc=example,dc=org -r EXAMPLE.ORG -s -H ldapi:/// -sscope 2 && service slapd stop
 RUN service slapd start && printf "123456\n123456\n123456" | kdb5_ldap_util -D cn=admin,dc=example,dc=org stashsrvpw -f /etc/krb5kdc/service.keyfile uid=kdc,ou=kerberos,ou=services,dc=example,dc=org && service slapd stop
 RUN service slapd start && printf "123456\n123456\n123456" | kdb5_ldap_util -D cn=admin,dc=example,dc=org stashsrvpw -f /etc/krb5kdc/service.keyfile uid=kadmin,ou=kerberos,ou=services,dc=example,dc=org && service slapd stop
 
 RUN service slapd start && service krb5-kdc start && service krb5-admin-server start \
-  && kadmin.local -q "addprinc -pw 123456 cbc@EXAMPLE.ORG" \
-#  && kadmin.local -q "addprinc -pw 123456 -x linkdn='cn=cbc+uid=cbc,dc=example,dc=org' cbc@EXAMPLE.ORG" \
+  && kadmin.local -q "addprinc -pw 123456 -x dn=cn=cbc+uid=cbc,dc=example,dc=org cbc@EXAMPLE.ORG" \
+# && kadmin.local -q "addprinc -pw 123456 cbc@EXAMPLE.ORG" \
+#  && kadmin.local -q "addprinc -pw 123456 -x linkdn=cn=cbc+uid=cbc,dc=example,dc=org cbc@EXAMPLE.ORG" \
+#  && kadmin.local -q "addprinc -pw 123456 -x containerdn=cn=EXAMPLE.ORG,cn=kerberos,ou=services,dc=example,dc=org cbc@EXAMPLE.ORG" \
   && kadmin.local -q "addprinc -randkey ldap/example.org" \
   && kadmin.local -q "ktadd -k /etc/krb5.keytab ldap/example.org" \
   && ldapmodify -H ldapi:/// -Y EXTERNAL -f /tmp/reg.ldif
