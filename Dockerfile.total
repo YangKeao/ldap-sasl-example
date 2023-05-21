@@ -20,7 +20,7 @@ RUN dpkg -i /mysql-community-client-plugins.deb
 ARG GOPROXY
 RUN export GOPROXY=${GOPROXY} && cd /tidb && make server \
   && cp /tidb/bin/tidb-server /tidb-server \
-  && rm -rf /tidb /go /usr/local/go
+  && rm -rf /tidb /go /usr/local/go /mysql-community-client-plugins.deb
 
 # Prepare LDAP
 
@@ -45,9 +45,9 @@ RUN ulimit -n 1024 && service slapd start && ldapmodify -H ldapi:// -Y EXTERNAL 
 
 # Prepare Kerberos
 
-COPY kerberos.ldif /tmp/kerberos.ldif
+# COPY kerberos.ldif /tmp/kerberos.ldif
 COPY kerberos.openldap.ldif /tmp/kerberos.openldap.ldif
-COPY kerberos.schema /tmp/kerberos.schema
+# COPY kerberos.schema /tmp/kerberos.schema
 COPY index.ldif /tmp/index.ldif
 COPY user2.ldif /tmp/user2.ldif
 COPY alc.ldif /tmp/alc.ldif
@@ -55,6 +55,7 @@ COPY debconf-krb5-config.conf /tmp/debconf-krb5-config.conf
 COPY services.ldif /tmp/services.ldif
 COPY slapd /etc/default/slapd
 COPY reg.ldif /tmp/reg.ldif
+COPY ldap.conf /etc/ldap/ldap.conf
 
 RUN cat /tmp/debconf-krb5-config.conf | DEBIAN_FRONTEND=noninteractive debconf-set-selections
 RUN apt-get update -y && DEBIAN_FRONTEND=noninteractive apt-get install krb5-kdc krb5-admin-server krb5-kdc-ldap krb5-pkinit schema2ldif -y
@@ -79,29 +80,12 @@ RUN service slapd start && printf "123456\n123456\n123456" | kdb5_ldap_util -D c
 RUN service slapd start && printf "123456\n123456\n123456" | kdb5_ldap_util -D cn=admin,dc=example,dc=org stashsrvpw -f /etc/krb5kdc/service.keyfile uid=kadmin,ou=kerberos,ou=services,dc=example,dc=org && service slapd stop
 
 RUN service slapd start && service krb5-kdc start && service krb5-admin-server start \
-  && kadmin.local -q "addprinc -pw 123456 -x dn=cn=cbc+uid=cbc,dc=example,dc=org cbc@EXAMPLE.ORG" \
-# && kadmin.local -q "addprinc -pw 123456 cbc@EXAMPLE.ORG" \
-#  && kadmin.local -q "addprinc -pw 123456 -x linkdn=cn=cbc+uid=cbc,dc=example,dc=org cbc@EXAMPLE.ORG" \
-#  && kadmin.local -q "addprinc -pw 123456 -x containerdn=cn=EXAMPLE.ORG,cn=kerberos,ou=services,dc=example,dc=org cbc@EXAMPLE.ORG" \
+  && kadmin.local -q "addprinc -pw 123456 -x dn=uid=cbc,dc=example,dc=org cbc@EXAMPLE.ORG" \
   && kadmin.local -q "addprinc -randkey ldap/example.org" \
   && kadmin.local -q "ktadd -k /etc/krb5.keytab ldap/example.org" \
+  && chown openldap:openldap /etc/krb5.keytab \
+  && chmod 600 /etc/krb5.keytab \
   && ldapmodify -H ldapi:/// -Y EXTERNAL -f /tmp/reg.ldif
-
-
-
-
-
-
-# RUN printf "123456\n123456" | krb5_newrealm
-# RUN kadmin.local -q "addprinc -pw 123456 ldap/example.org@EXAMPLE.ORG"
-
-# RUN printf "addent -password -p cbc@EXAMPLE.ORG -k 1 -e aes256-cts-hmac-sha1-96\n123456\naddent -password -p ldap/example.org@EXAMPLE.ORG -k 1 -e aes256-cts-hmac-sha1-96\n123456\nwkt /etc/krb5.keytab\nquit" | ktutil
-# RUN chmod 777 /etc/krb5.keytab
-
-# COPY ./ldap.ldif /tmp/ldap.ldif
-# RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/ldap.ldif && service slapd stop
-# COPY ./krbtgt.ldif /tmp/krbtgt.ldif
-# RUN ulimit -n 1024 && service slapd start && ldapadd -x -D "cn=admin,dc=example,dc=org" -w 123456 -H ldapi:/// -f /tmp/krbtgt.ldif && service slapd stop
 
 WORKDIR /
 EXPOSE 4000

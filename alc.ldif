@@ -13,3 +13,24 @@ olcAccess: {1}to dn.subtree="dc=example,dc=org"
   by dn.exact="uid=kadmin,ou=kerberos,ou=services,dc=example,dc=org" write
   by anonymous auth
   by * none
+
+dn: olcDatabase={-1}frontend,cn=config
+add: olcAccess
+olcAccess: {3}to dn.base=""
+  by * read
+-
+add: olcAccess
+olcAccess: {4}to dn.subtree="cn=EXAMPLE.ORG,cn=kerberos,ou=services,dc=example,dc=org"
+  by dn.exact="uid=kdc,ou=ckerberos,ou=services,dc=example,dc=org" write
+  by dn.exact="uid=kadmin,ou=kerberos,ou=services,dc=example,dc=org" write
+  by * none
+-
+add: olcAccess
+olcAccess: {5}to dn.subtree="dc=example,dc=org"
+  by dn.exact="uid=kdc,ou=ckerberos,ou=services,dc=example,dc=org" write
+  by dn.exact="uid=kadmin,ou=kerberos,ou=services,dc=example,dc=org" write
+  by * none
+-
+add: olcAccess
+olcAccess: {6}to *
+  by * read

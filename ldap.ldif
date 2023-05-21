@@ -1,4 +1,4 @@
-dn: uid=ldap,ou=services,dc=example,dc=com
+dn: uid=ldap,ou=services,dc=example,dc=org
 objectClass: top
 objectClass: organizationalUnit
 objectClass: krb5KDCEntry
@@ -7,5 +7,5 @@ objectClass: krb5Principal
 krb5KeyVersionNumber: 0
 krb5PrincipalName: ldap/example.org@EXAMPLE.ORG
 uid: ldap
-example.orguserPassword: randomKey
+userPassword: randomKey
 ou: TGT
