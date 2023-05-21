@@ -1,5 +1,5 @@
 dn: cn=config
 changetype: modify
 replace: olcAuthzRegexp
-olcAuthzRegexp: {0}"uid=([^/]*)/admin,(cn=example.org,)?cn=gssapi,cn=auth" "cn=admin,dc=example,dc=org"
-olcAuthzRegexp: {1}"uid=([^/]*),(cn=example.org,)?cn=gssapi,cn=auth" "uid=$1,dc=example,dc=org
+olcAuthzRegexp: {0}"uid=([^/]*)/admin,cn=gssapi,cn=auth" "cn=admin,dc=example,dc=org"
+olcAuthzRegexp: {1}"uid=([^/]*),cn=gssapi,cn=auth" "uid=$1,dc=example,dc=org
