@@ -1,8 +1,0 @@
-dn: uid=krbtgt,ou=services,dc=example,dc=org
-objectClass: top
-objectClass: organizationalUnit
-objectClass: uidObject
-krb5PrincipalName: krbtgt/EXAMPLE.ORG@EXAMPLE.ORG
-uid: krbtgt
-userPassword:: randomkey
-ou: LDAP
