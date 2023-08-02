@@ -14,17 +14,17 @@ RUN echo "123456" |saslpasswd2 -c yangkeao -u example.org -p
 RUN usermod -aG sasl openldap
 
 # install percona server
-RUN apt-get update -y && apt-get install curl -y
-RUN curl -L -O https://repo.percona.com/apt/percona-release_latest.generic_all.deb
-RUN apt-get install gnupg2 lsb-release ./percona-release_latest.generic_all.deb -y
+# RUN apt-get update -y && apt-get install curl -y
+# RUN curl -L -O https://repo.percona.com/apt/percona-release_latest.generic_all.deb
+# RUN apt-get install gnupg2 lsb-release ./percona-release_latest.generic_all.deb -y
 
-COPY ./debconf-percona.conf /tmp/debconf-percona.conf
-RUN cat /tmp/debconf-percona.conf | DEBIAN_FRONTEND=noninteractive debconf-set-selections
-RUN apt-get update -y && percona-release setup ps80 && DEBIAN_FRONTEND=noninteractive apt-get install percona-server-server -y
+# COPY ./debconf-percona.conf /tmp/debconf-percona.conf
+# RUN cat /tmp/debconf-percona.conf | DEBIAN_FRONTEND=noninteractive debconf-set-selections
+# RUN apt-get update -y && percona-release setup ps80 && DEBIAN_FRONTEND=noninteractive apt-get install percona-server-server -y
 
-COPY ./my.cnf /etc/my.cnf
+# COPY ./my.cnf /etc/my.cnf
 
-RUN service mysql start && mysql -u root -p123456 -e "create user yangkeao IDENTIFIED WITH authentication_ldap_sasl as 'cn=yangkeao,dc=example,dc=org';" && service mysql stop
+# RUN service mysql start && mysql -u root -p123456 -e "create user yangkeao IDENTIFIED WITH authentication_ldap_sasl as 'cn=yangkeao,dc=example,dc=org';" && service mysql stop
 
 COPY ./ssl.ldif /tmp/ssl.ldif
 COPY ./ssl/ldap.key /etc/ssl/private/ldap.key
@@ -32,6 +32,8 @@ COPY ./ssl/ldap.crt /etc/ssl/certs/ldap.crt
 COPY ./ssl/example.crt /etc/ssl/certs/example.crt
 RUN chmod 777 -R /etc/ssl
 RUN ulimit -n 1024 && service slapd start && ldapmodify -H ldapi:// -Y EXTERNAL -f /tmp/ssl.ldif && service slapd stop
+
+RUN sed -i 's|SLAPD_SERVICES="ldap:/// ldapi:///"|SLAPD_SERVICES="ldap:/// ldapi:/// ldaps:///"|' /etc/default/slapd
 
 COPY ./entrypoint.sh /entrypoint.sh
 ENTRYPOINT [ "/entrypoint.sh" ]
